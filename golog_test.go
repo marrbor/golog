@@ -9,6 +9,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetLogger(t *testing.T) {
+	os.Clearenv()
+	l := golog.GetLogger()
+	oldflg := l.Flags()
+	l.SetFlags(0)
+	flg := l.Flags()
+	assert.EqualValues(t, 0, flg)
+	l.SetFlags(oldflg)
+	assert.EqualValues(t, oldflg, l.Flags())
+}
+
+func TestGetFilterLevel(t *testing.T) {
+	os.Clearenv()
+	lvl := golog.GetFilterLevel()
+	assert.EqualValues(t, golog.WARN, lvl)
+}
+
 func TestSetFilterLevel(t *testing.T) {
 	err := golog.SetFilterLevel(-1)
 	assert.EqualError(t, err, golog.OutOfLevelRangeError.Error())
@@ -37,58 +54,58 @@ func TestLoadFilterLevel(t *testing.T) {
 	assert.EqualValues(t, golog.MAX, golog.GetFilterLevel())
 
 	// error case
-	_ = os.Setenv(golog.LEVEL_ENV, "abc")
+	_ = os.Setenv(golog.LevelEnv, "abc")
 	err = golog.LoadFilterLevel()
 	assert.EqualError(t, err, golog.InvalidLevelNameError.Error())
 
-	_ = os.Setenv(golog.LEVEL_ENV, fmt.Sprintf("%d", golog.MAX+1))
+	_ = os.Setenv(golog.LevelEnv, fmt.Sprintf("%d", golog.MAX+1))
 	err = golog.LoadFilterLevel()
 	assert.EqualError(t, err, golog.InvalidLevelNameError.Error())
 
-	_ = os.Setenv(golog.LEVEL_ENV, fmt.Sprintf("%d", golog.MIN-1))
+	_ = os.Setenv(golog.LevelEnv, fmt.Sprintf("%d", golog.MIN-1))
 	err = golog.LoadFilterLevel()
 	assert.EqualError(t, err, golog.InvalidLevelNameError.Error())
 
-	_ = os.Setenv(golog.LEVEL_ENV, fmt.Sprintf("%d", golog.MIN))
+	_ = os.Setenv(golog.LevelEnv, fmt.Sprintf("%d", golog.MIN))
 	err = golog.LoadFilterLevel()
 	assert.EqualError(t, err, golog.InvalidLevelNameError.Error())
 
-	_ = os.Setenv(golog.LEVEL_ENV, fmt.Sprintf("%d", golog.MAX))
+	_ = os.Setenv(golog.LevelEnv, fmt.Sprintf("%d", golog.MAX))
 	err = golog.LoadFilterLevel()
 	assert.EqualError(t, err, golog.InvalidLevelNameError.Error())
 
 	// valid
-	_ = os.Setenv(golog.LEVEL_ENV, "TRACE")
+	_ = os.Setenv(golog.LevelEnv, "TRACE")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.TRACE, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "DEBUG")
+	_ = os.Setenv(golog.LevelEnv, "DEBUG")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.DEBUG, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "INFO")
+	_ = os.Setenv(golog.LevelEnv, "INFO")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.INFO, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "WARN")
+	_ = os.Setenv(golog.LevelEnv, "WARN")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.WARN, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "ERROR")
+	_ = os.Setenv(golog.LevelEnv, "ERROR")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.ERROR, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "FATAL")
+	_ = os.Setenv(golog.LevelEnv, "FATAL")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.FATAL, golog.GetFilterLevel())
 
-	_ = os.Setenv(golog.LEVEL_ENV, "PANIC")
+	_ = os.Setenv(golog.LevelEnv, "PANIC")
 	err = golog.LoadFilterLevel()
 	assert.NoError(t, err)
 	assert.EqualValues(t, golog.PANIC, golog.GetFilterLevel())
@@ -102,50 +119,52 @@ func TestLoadFilterLevel(t *testing.T) {
 
 func TestOutput(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.DEBUG)
-	assert.False(t, golog.Output(golog.TRACE, 0, "golog trace"))
-	assert.True(t, golog.Output(golog.DEBUG, 1, "golog debug"))
-	assert.True(t, golog.Output(golog.INFO, 2, "golog info"))
+	assert.False(t, golog.Output(golog.TRACE, "golog trace"))
+	assert.True(t, golog.Output(golog.DEBUG, "golog debug", 1))
+	assert.True(t, golog.Output(golog.INFO, "golog info", 1))
 }
 
 func TestTrace(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.TRACE)
-	assert.True(t, golog.Trace(0, "golog trace"))
+	assert.True(t, golog.Trace("golog trace"))
+	assert.True(t, golog.Trace("golog trace with depth", 1))
 	_ = golog.SetFilterLevel(golog.DEBUG)
-	assert.False(t, golog.Trace(0, "golog trace"))
+	assert.False(t, golog.Trace("golog trace"))
+	assert.False(t, golog.Trace("golog trace with depth", 1))
 }
 
 func TestDebug(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.DEBUG)
-	assert.True(t, golog.Debug(0, "golog debug"))
+	assert.True(t, golog.Debug("golog debug"))
+	assert.True(t, golog.Debug("golog debug with depth", 1))
 	_ = golog.SetFilterLevel(golog.INFO)
-	assert.False(t, golog.Debug(0, "golog debug"))
+	assert.False(t, golog.Debug("golog debug"))
+	assert.False(t, golog.Debug("golog debug with depth", 1))
 }
 
 func TestInfo(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.INFO)
-	assert.True(t, golog.Info(0, "golog info"))
+	assert.True(t, golog.Info("golog info"))
+	assert.True(t, golog.Info("golog info with depth", 1))
 	_ = golog.SetFilterLevel(golog.WARN)
-	assert.False(t, golog.Info(0, "golog info"))
+	assert.False(t, golog.Info("golog info"))
+	assert.False(t, golog.Info("golog info with depth", 1))
 }
 
 func TestWarn(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.WARN)
-	assert.True(t, golog.Warn(0, "golog warn"))
+	assert.True(t, golog.Warn("golog warn"))
+	assert.True(t, golog.Warn("golog warn with depth", 1))
 	_ = golog.SetFilterLevel(golog.ERROR)
-	assert.False(t, golog.Warn(0, "golog warn"))
+	assert.False(t, golog.Warn("golog warn"))
+	assert.False(t, golog.Warn("golog warn with depth", 1))
 }
 
 func TestError(t *testing.T) {
 	_ = golog.SetFilterLevel(golog.ERROR)
-	assert.True(t, golog.Error(0, "golog error"))
+	assert.True(t, golog.Error("golog error"))
+	assert.True(t, golog.Error("golog error with depth", 1))
 	_ = golog.SetFilterLevel(golog.FATAL)
-	assert.False(t, golog.Error(0, "golog error"))
-}
-
-func TestFatal(t *testing.T) {
-
-}
-
-func TestPanic(t *testing.T) {
-
+	assert.False(t, golog.Error("golog error"))
+	assert.False(t, golog.Error("golog error with depth"))
 }

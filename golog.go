@@ -19,7 +19,11 @@ const (
 	MIN = TRACE
 	MAX = PANIC
 
-	LEVEL_ENV = "GOLOG_LEVEL"
+	LevelEnv = "GOLOG_LEVEL"
+
+	// DefaultcalldepthCount is the number of skipped callstack(s). The default value is 3.
+	// (2 (function nesting in the "log" package) + 1 (function nesting in this package))
+	DefaultCallDepth = 2 + 1
 )
 
 // filter level
@@ -40,6 +44,23 @@ var (
 	logger = log.New(os.Stderr, "", log.LstdFlags|log.Lshortfile)
 )
 
+///// Local functions
+
+// init loads filtering levels when specified.
+func init() {
+	le := os.Getenv(LevelEnv)
+	if 0 < len(le) {
+		for lv, str := range levelStr {
+			if str == le {
+				if err := SetFilterLevel(lv); err != nil {
+					Output(ERROR, err.Error())
+					return
+				}
+			}
+		}
+	}
+}
+
 // canOut check whether filter or not
 func canOut(level int) bool {
 	return filter <= level
@@ -50,9 +71,16 @@ func checkLevel(level int) bool {
 	return MIN <= level && level <= MAX
 }
 
-// prefix set prefix strings [level]
-func prefix(level int) {
-	logger.SetPrefix(fmt.Sprintf("[%-5s] ", levelStr[level]))
+// form formed level and strings.
+func form(level int, msg string) string {
+	return fmt.Sprintf("[%-5s] %s", levelStr[level], msg)
+}
+
+///// Global functions (configuration)
+
+// GetLogger returns logger instance to fix configuration for logger.
+func GetLogger() *log.Logger {
+	return logger
 }
 
 // GetFilterLevel returns current filtering level
@@ -60,7 +88,15 @@ func GetFilterLevel() int {
 	return filter
 }
 
-// setFilterLevel sets filtering level
+// GetFilterLevelStr returns current filtering level
+func GetFilterLevelStr(level int) (string, error) {
+	if level < MIN || MAX < level {
+		return "", OutOfLevelRangeError
+	}
+	return levelStr[level], nil
+}
+
+// SetFilterLevel sets filtering level
 func SetFilterLevel(level int) error {
 	if !checkLevel(level) {
 		return OutOfLevelRangeError
@@ -71,7 +107,7 @@ func SetFilterLevel(level int) error {
 
 // LoadFilterLevel loads filtering level from environment variable.
 func LoadFilterLevel() error {
-	le := os.Getenv(LEVEL_ENV)
+	le := os.Getenv(LevelEnv)
 	if 0 < len(le) {
 		for lv, str := range levelStr {
 			if str == le {
@@ -83,50 +119,81 @@ func LoadFilterLevel() error {
 	return nil
 }
 
+///// Global Functions (logging)
+
 // Output out log when the specified level is greater or equal than filtering level and return whether out log or not.
-func Output(level, skip int, msg string) bool {
+func Output(level int, msg string, calldepth ...int) bool {
 	if !canOut(level) {
 		return false
 	}
 
-	prefix(level)
-	if err := logger.Output(skip, msg); err != nil {
+	depth := DefaultCallDepth
+	if 0 < len(calldepth) {
+		depth += calldepth[0]
+	}
+
+	if err := logger.Output(depth, form(level, msg)); err != nil {
 		return false
 	}
 	return true
 }
 
-func Trace(skip int, msg string) bool {
-	return Output(TRACE, skip, msg)
+func Trace(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(TRACE, msg)
+	}
+	return Output(TRACE, msg, calldepth[0])
 }
 
-func Debug(skip int, msg string) bool {
-	return Output(DEBUG, skip, msg)
+func Debug(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(DEBUG, msg)
+	}
+	return Output(DEBUG, msg, calldepth[0])
 }
 
-func Info(skip int, msg string) bool {
-	return Output(INFO, skip, msg)
+func Info(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(INFO, msg)
+	}
+	return Output(INFO, msg, calldepth[0])
 }
 
-func Warn(skip int, msg string) bool {
-	return Output(WARN, skip, msg)
+func Warn(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(WARN, msg)
+	}
+	return Output(WARN, msg, calldepth[0])
 }
 
-func Error(skip int, msg string) bool {
-	return Output(ERROR, skip, msg)
+// Error calls
+func Error(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(ERROR, msg)
+	}
+	return Output(ERROR, msg, calldepth[0])
 }
 
-func Fatal(msg string) bool {
+// Fatal exit application with code 1 after logging.
+func Fatal(msg string, calldepth ...int) {
 	if !canOut(FATAL) {
-		return false
+		os.Exit(1)
 	}
-	prefix(FATAL)
-	logger.Fatal(msg)
-	return true
+
+	if len(calldepth) <= 0 {
+		_ = Output(FATAL, msg)
+		os.Exit(1)
+	}
+	_ = Output(FATAL, msg, calldepth[0])
+	os.Exit(1)
 }
 
-func Panic(msg string) bool {
-	prefix(PANIC)
-	logger.Panic(msg)
-	return true
+// Panic panics application after logging.
+func Panic(msg string, calldepth ...int) {
+	if len(calldepth) <= 0 {
+		_ = Output(PANIC, msg)
+		panic(msg)
+	}
+	_ = Output(PANIC, msg, calldepth[0])
+	panic(msg)
 }
