@@ -38,8 +38,8 @@ Use following seven levels, shown from low to high. When filter level is "WARN",
 1. `INFO`
 1. `WARN`
 1. `ERROR`
-1. `FATAL` call `logger.Fatal` function. It cause application exit with `1`
-1. `PANIC` call `logger.Panic` function. It cause application panic.
+1. `FATAL` application exit with `1` after logging.
+1. `PANIC` application panic after logging.
 
 Default filter level is `WARN`. If you want to modify, use `SetFilterLevel` or `LoadFilterLevel`
 
