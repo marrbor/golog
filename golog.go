@@ -138,6 +138,7 @@ func Output(level int, msg string, calldepth ...int) bool {
 	return true
 }
 
+// Trace outs log when filter level is TRACE.
 func Trace(msg string, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(TRACE, msg)
@@ -145,6 +146,7 @@ func Trace(msg string, calldepth ...int) bool {
 	return Output(TRACE, msg, calldepth[0])
 }
 
+// Debug outs log when filter level is TRACE or DEBUG.
 func Debug(msg string, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(DEBUG, msg)
@@ -152,6 +154,7 @@ func Debug(msg string, calldepth ...int) bool {
 	return Output(DEBUG, msg, calldepth[0])
 }
 
+// Info outs log when filter level less or equal to INFO.
 func Info(msg string, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(INFO, msg)
@@ -159,6 +162,7 @@ func Info(msg string, calldepth ...int) bool {
 	return Output(INFO, msg, calldepth[0])
 }
 
+// Warn outs log when filter level less or equal to WARN.
 func Warn(msg string, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(WARN, msg)
@@ -166,8 +170,17 @@ func Warn(msg string, calldepth ...int) bool {
 	return Output(WARN, msg, calldepth[0])
 }
 
-// Error calls
+// Error outs log when filter level less or equal to ERROR.
 func Error(msg string, calldepth ...int) bool {
+	if len(calldepth) <= 0 {
+		return Output(ERROR, msg)
+	}
+	return Output(ERROR, msg, calldepth[0])
+}
+
+// Err outs log when filter level less or equal to ERROR.
+func Err(err error, calldepth ...int) bool {
+	msg := fmt.Sprintf("%+v", err)
 	if len(calldepth) <= 0 {
 		return Output(ERROR, msg)
 	}
