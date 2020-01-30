@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Run `GOLOG_LEVEL=INFO go test --run TestEnv`
 func TestEnv(t *testing.T) {
 	lvl := GetFilterLevel()
 	lvlStr := os.Getenv(LevelEnv)

@@ -23,7 +23,7 @@ func TestGetLogger(t *testing.T) {
 func TestGetFilterLevel(t *testing.T) {
 	os.Clearenv()
 	lvl := golog.GetFilterLevel()
-	assert.EqualValues(t, golog.WARN, lvl)
+	assert.EqualValues(t, golog.INFO, lvl)
 }
 
 func TestSetFilterLevel(t *testing.T) {

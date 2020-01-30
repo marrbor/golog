@@ -28,7 +28,7 @@ const (
 
 // filter level
 var (
-	filter                = WARN
+	filter                = INFO
 	OutOfLevelRangeError  = fmt.Errorf("spacified level is not within log level range")
 	InvalidLevelNameError = fmt.Errorf("spacified level string is not correct level name")
 	levelStr              = []string{
