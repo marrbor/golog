@@ -72,8 +72,8 @@ func checkLevel(level int) bool {
 }
 
 // form formed level and strings.
-func form(level int, msg string) string {
-	return fmt.Sprintf("[%-5s] %s", levelStr[level], msg)
+func form(level int, msg interface{}) string {
+	return fmt.Sprintf("[%-5s] %+v", levelStr[level], msg)
 }
 
 ///// Global functions (configuration)
@@ -122,7 +122,7 @@ func LoadFilterLevel() error {
 ///// Global Functions (logging)
 
 // Output out log when the specified level is greater or equal than filtering level and return whether out log or not.
-func Output(level int, msg string, calldepth ...int) bool {
+func Output(level int, msg interface{}, calldepth ...int) bool {
 	if !canOut(level) {
 		return false
 	}
@@ -139,7 +139,7 @@ func Output(level int, msg string, calldepth ...int) bool {
 }
 
 // Trace outs log when filter level is TRACE.
-func Trace(msg string, calldepth ...int) bool {
+func Trace(msg interface{}, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(TRACE, msg)
 	}
@@ -147,7 +147,7 @@ func Trace(msg string, calldepth ...int) bool {
 }
 
 // Debug outs log when filter level is TRACE or DEBUG.
-func Debug(msg string, calldepth ...int) bool {
+func Debug(msg interface{}, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(DEBUG, msg)
 	}
@@ -155,7 +155,7 @@ func Debug(msg string, calldepth ...int) bool {
 }
 
 // Info outs log when filter level less or equal to INFO.
-func Info(msg string, calldepth ...int) bool {
+func Info(msg interface{}, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(INFO, msg)
 	}
@@ -163,7 +163,7 @@ func Info(msg string, calldepth ...int) bool {
 }
 
 // Warn outs log when filter level less or equal to WARN.
-func Warn(msg string, calldepth ...int) bool {
+func Warn(msg interface{}, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(WARN, msg)
 	}
@@ -171,16 +171,7 @@ func Warn(msg string, calldepth ...int) bool {
 }
 
 // Error outs log when filter level less or equal to ERROR.
-func Error(msg string, calldepth ...int) bool {
-	if len(calldepth) <= 0 {
-		return Output(ERROR, msg)
-	}
-	return Output(ERROR, msg, calldepth[0])
-}
-
-// Err outs log when filter level less or equal to ERROR.
-func Err(err error, calldepth ...int) bool {
-	msg := fmt.Sprintf("%+v", err)
+func Error(msg interface{}, calldepth ...int) bool {
 	if len(calldepth) <= 0 {
 		return Output(ERROR, msg)
 	}
@@ -188,7 +179,7 @@ func Err(err error, calldepth ...int) bool {
 }
 
 // Fatal exit application with code 1 after logging.
-func Fatal(msg string, calldepth ...int) {
+func Fatal(msg interface{}, calldepth ...int) {
 	if !canOut(FATAL) {
 		os.Exit(1)
 	}
@@ -202,7 +193,7 @@ func Fatal(msg string, calldepth ...int) {
 }
 
 // Panic panics application after logging.
-func Panic(msg string, calldepth ...int) {
+func Panic(msg interface{}, calldepth ...int) {
 	if len(calldepth) <= 0 {
 		_ = Output(PANIC, msg)
 		panic(msg)

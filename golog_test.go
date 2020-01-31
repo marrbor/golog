@@ -168,13 +168,3 @@ func TestError(t *testing.T) {
 	assert.False(t, golog.Error("golog error"))
 	assert.False(t, golog.Error("golog error with depth"))
 }
-
-func TestErr(t *testing.T) {
-	_ = golog.SetFilterLevel(golog.ERROR)
-	err := fmt.Errorf("golog err")
-	assert.True(t, golog.Err(err))
-	assert.True(t, golog.Err(err, 1))
-	_ = golog.SetFilterLevel(golog.FATAL)
-	assert.False(t, golog.Err(err))
-	assert.False(t, golog.Err(err, 1))
-}
