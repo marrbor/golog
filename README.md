@@ -64,3 +64,6 @@ l.SetPrefix("My Application: ")
 |Destination|os.Stderr|use SetOutput()|
 |Flags|Ldate+Ltime+Lshortfile|use SetFlags()|
 |Prefix|""|use SetPrefix()|
+
+## License
+MIT
