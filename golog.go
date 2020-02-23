@@ -105,16 +105,21 @@ func SetFilterLevel(level int) error {
 	return nil
 }
 
+// SetFilterLevelStr update log level to given log name.
+func SetFilterLevelStr(level string) error {
+	for lvl, str := range levelStr {
+		if level == str {
+			return SetFilterLevel(lvl)
+		}
+	}
+	return InvalidLevelNameError
+}
+
 // LoadFilterLevel loads filtering level from environment variable.
 func LoadFilterLevel() error {
 	le := os.Getenv(LevelEnv)
 	if 0 < len(le) {
-		for lv, str := range levelStr {
-			if str == le {
-				return SetFilterLevel(lv)
-			}
-		}
-		return InvalidLevelNameError
+		return SetFilterLevelStr(le)
 	}
 	return nil
 }
